@@ -5,14 +5,19 @@ import plotly.graph_objects as go
 import plotly.express as px
 import os
 
-path = "D:\DS_CAA\estrategia"
-os.chdir(path)
+# temp_coctel_fuente = pd.read_csv(path + '/bd/temp_coctel_fuente.csv', sep='|', encoding='utf-8-sig')
+# temp_coctel_fuente_programas = pd.read_csv(path + '/bd/temp_coctel_fuente_programas.csv', sep='|', encoding='utf-8-sig')
+# temp_coctel_fuente_fb = pd.read_csv(path + '/bd/temp_coctel_fuente_fb.csv', sep='|', encoding='utf-8-sig')
+# temp_coctel_fuente_actores = pd.read_csv(path + '/bd/temp_coctel_fuente_actores.csv', sep='|', encoding='utf-8-sig')
+# temp_coctel_temas = pd.read_csv(path + '/bd/temp_coctel_temas.csv', sep='|', encoding='utf-8-sig')
 
-temp_coctel_fuente = pd.read_csv(path + '/bd/temp_coctel_fuente.csv', sep='|', encoding='utf-8-sig')
-temp_coctel_fuente_programas = pd.read_csv(path + '/bd/temp_coctel_fuente_programas.csv', sep='|', encoding='utf-8-sig')
-temp_coctel_fuente_fb = pd.read_csv(path + '/bd/temp_coctel_fuente_fb.csv', sep='|', encoding='utf-8-sig')
-temp_coctel_fuente_actores = pd.read_csv(path + '/bd/temp_coctel_fuente_actores.csv', sep='|', encoding='utf-8-sig')
-temp_coctel_temas = pd.read_csv(path + '/bd/temp_coctel_temas.csv', sep='|', encoding='utf-8-sig')
+temp_coctel_fuente = pd.read_parquet('temp_coctel_fuente.parquet')
+temp_coctel_fuente_programas = pd.read_parquet('temp_coctel_fuente_programas.parquet')
+temp_coctel_fuente_fb = pd.read_parquet('temp_coctel_fuente_fb.parquet')
+temp_coctel_fuente_actores = pd.read_parquet('temp_coctel_fuente_actores.parquet')
+temp_coctel_temas = pd.read_parquet('temp_coctel_temas.parquet')
+
+
 
 lugares_uniques = temp_coctel_fuente['lugar'].unique().tolist()
 
