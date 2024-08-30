@@ -3,7 +3,6 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
-import os
 
 # temp_coctel_fuente = pd.read_csv(path + '/bd/temp_coctel_fuente.csv', sep='|', encoding='utf-8-sig')
 # temp_coctel_fuente_programas = pd.read_csv(path + '/bd/temp_coctel_fuente_programas.csv', sep='|', encoding='utf-8-sig')
@@ -248,22 +247,22 @@ temp_g2 = temp_coctel_fuente[(temp_coctel_fuente['fecha_registro']>=fecha_inicio
                              (temp_coctel_fuente['fecha_registro']<=fecha_fin_g2) &
                              (temp_coctel_fuente['lugar']==option_lugar_g2)]
 
-temp_g2['semana'] = temp_g2['fecha_registro'].dt.isocalendar().year.map(str) +'-'+temp_g2['fecha_registro'].dt.isocalendar().week.map(str)
-temp_g2['a_favor'] = 0 # 1: a favor, 2: en contra
-temp_g2['a_favor'][temp_g2['id_posicion'].isin([1,2])] = 1
-temp_g2['en_contra'] = 0 # 1: a favor, 2: en contra
-temp_g2['en_contra'][temp_g2['id_posicion'].isin([4,5])] = 1
-
-if option_fuente_g2 == 'Radio':
-    temp_g2 = temp_g2[temp_g2['id_fuente']==1].groupby('semana').agg({'id':'count','a_favor':'sum','en_contra':'sum','fecha_registro':'first'}).reset_index()
-elif option_fuente_g2 == 'TV':
-    temp_g2 = temp_g2[temp_g2['id_fuente']==2].groupby('semana').agg({'id':'count','a_favor':'sum','en_contra':'sum','fecha_registro':'first'}).reset_index()
-elif option_fuente_g2 == 'Redes':
-    temp_g2 = temp_g2[temp_g2['id_fuente']==3].groupby('semana').agg({'id':'count','a_favor':'sum','en_contra':'sum','fecha_registro':'first'}).reset_index()
-else:
-    temp_g2 = temp_g2.groupby('semana').agg({'id':'count','a_favor':'sum','en_contra':'sum','fecha_registro':'first'}).reset_index()
-
 if not temp_g2.empty:
+    temp_g2['semana'] = temp_g2['fecha_registro'].dt.isocalendar().year.map(str) +'-'+temp_g2['fecha_registro'].dt.isocalendar().week.map(str)
+    temp_g2['a_favor'] = 0 # 1: a favor, 2: en contra
+    temp_g2['a_favor'][temp_g2['id_posicion'].isin([1,2])] = 1
+    temp_g2['en_contra'] = 0 # 1: a favor, 2: en contra
+    temp_g2['en_contra'][temp_g2['id_posicion'].isin([4,5])] = 1
+
+    if option_fuente_g2 == 'Radio':
+        temp_g2 = temp_g2[temp_g2['id_fuente']==1].groupby('semana').agg({'id':'count','a_favor':'sum','en_contra':'sum','fecha_registro':'first'}).reset_index()
+    elif option_fuente_g2 == 'TV':
+        temp_g2 = temp_g2[temp_g2['id_fuente']==2].groupby('semana').agg({'id':'count','a_favor':'sum','en_contra':'sum','fecha_registro':'first'}).reset_index()
+    elif option_fuente_g2 == 'Redes':
+        temp_g2 = temp_g2[temp_g2['id_fuente']==3].groupby('semana').agg({'id':'count','a_favor':'sum','en_contra':'sum','fecha_registro':'first'}).reset_index()
+    else:
+        temp_g2 = temp_g2.groupby('semana').agg({'id':'count','a_favor':'sum','en_contra':'sum','fecha_registro':'first'}).reset_index()
+
     temp_g2 = temp_g2.rename(columns={'id':'Cantidad'})
     temp_g2 = temp_g2.sort_values('fecha_registro')
     temp_fecha = pd.DataFrame()
