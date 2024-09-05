@@ -39,9 +39,9 @@ id_fuente_dict = {1: 'radio',
 coctel_dict = {0: 'Sin coctel',
                1: 'Con coctel'
                }
-id_fuente_dict = {1: 'radio',
-                  2: 'tv',
-                  3: 'redes'
+id_fuente_dict = {1: 'Radio',
+                  2: 'TV',
+                  3: 'Redes'
                   }
 color_posicion_dict = {"a favor": "blue",
                        "potencialmente a favor": "lightblue",
@@ -65,11 +65,68 @@ st.set_page_config(page_title="Dashboard SIMA",
 st.title("Dashboard SIMA")
 st.divider()
 
-#%% 1.- PROPORCION COCTELES
+#%% 1.- PROPORCION COCTELES solo fechas y lugar
 
 st.subheader("1.- Proporción de cocteles en lugar y fecha específica")
 
-col1, col2, col3, col4 = st.columns(4)
+col1, col2, col3 = st.columns(3)
+with col1:
+    fecha_inicio_c1 = st.date_input(
+    "Fecha Inicio",
+    format="DD.MM.YYYY")
+with col2:
+    fecha_fin_c1 = st.date_input(
+    "Fecha Fin",
+    format="DD.MM.YYYY")
+with col3:
+    option_lugar_c1 = st.selectbox(
+    "Lugar",
+    lugares_uniques)
+
+fecha_inicio_c1 = pd.to_datetime(fecha_inicio_c1,format='%Y-%m-%d')
+fecha_fin_c1 = pd.to_datetime(fecha_fin_c1,format='%Y-%m-%d')
+
+temp_c1 = temp_coctel_fuente[(temp_coctel_fuente['fecha_registro']>=fecha_inicio_c1)&
+                             (temp_coctel_fuente['fecha_registro']<=fecha_fin_c1)&
+                            (temp_coctel_fuente['lugar']==option_lugar_c1)]
+
+temp_c1["Fuente"] = temp_c1["id_fuente"].map(id_fuente_dict)
+
+def proporcion_cocteles(df):
+    df = df.rename(columns={'coctel':'Fuente','id':'Cantidad'})
+    df['Proporción'] = df['Cantidad'] / df['Cantidad'].sum()
+    df['Proporción'] = df['Proporción'].map('{:.0%}'.format)
+    df['Fuente'] = df['Fuente'].replace({0:'Otras Fuentes',1:'Coctel Noticias'})
+    return df
+
+temp_c1_radio = temp_c1[temp_c1['id_fuente']==1].groupby('coctel').agg({'id':'count'}).reset_index()
+temp_c1_radio = proporcion_cocteles(temp_c1_radio)
+
+temp_c1_tv = temp_c1[temp_c1['id_fuente']==2].groupby('coctel').agg({'id':'count'}).reset_index()
+temp_c1_tv = proporcion_cocteles(temp_c1_tv)
+
+temp_c1_redes = temp_c1[temp_c1['id_fuente']==3].groupby('coctel').agg({'id':'count'}).reset_index()
+temp_c1_redes = proporcion_cocteles(temp_c1_redes)
+
+st.write(f"Proporción de cocteles en {option_lugar_c1} entre {fecha_inicio_c1.strftime('%d.%m.%Y')} y {fecha_fin_c1.strftime('%d.%m.%Y')}")
+
+col1, col2, col3 = st.columns(3)
+with col1:
+    st.write("Radio")
+    st.dataframe(temp_c1_radio, hide_index=True)
+
+with col2:
+    st.write("TV")
+    st.dataframe(temp_c1_tv, hide_index=True)
+
+with col3:
+    st.write("Redes")
+    st.dataframe(temp_c1_redes, hide_index=True)
+#%% 1.- PROPORCION COCTELES
+
+st.subheader("1.- Proporción de cocteles en lugar, fuentes y fechas específicas")
+
+col1, col2, col3 = st.columns(3)
 with col1:
     fecha_inicio_t1 = st.date_input(
     "Fecha Inicio g1",
@@ -79,31 +136,30 @@ with col2:
     "Fecha Fin g1",
     format="DD.MM.YYYY")
 with col3:
-    option_fuente_t1 = st.selectbox(
+    option_fuente_t1 = st.multiselect(
     "Fuente g1",
-    ("Radio", "TV", "Redes","Todos"),)
-with col4:
-    option_lugar_t1 = st.selectbox(
-    "Lugar g1",
-    lugares_uniques
-    )
+    ["Radio", "TV", "Redes"], ["Radio", "TV", "Redes"])
+
+option_lugar_t1 = st.multiselect("Lugar g1",
+                                 lugares_uniques,
+                                 lugares_uniques
+                                 )
 
 fecha_inicio_t1 = pd.to_datetime(fecha_inicio_t1,format='%Y-%m-%d')
 fecha_fin_t1 = pd.to_datetime(fecha_fin_t1,format='%Y-%m-%d')
 
-temp_t1 = temp_coctel_fuente[(temp_coctel_fuente['fecha_registro']>=fecha_inicio_t1)&(temp_coctel_fuente['fecha_registro']<=fecha_fin_t1)&
-                          (temp_coctel_fuente['lugar']==option_lugar_t1)]
-if option_fuente_t1 == 'Radio':
-    temp_t1 = temp_t1[temp_t1['id_fuente']==1].groupby('coctel').agg({'id':'count'}).reset_index()
-elif option_fuente_t1 == 'TV':
-    temp_t1 = temp_t1[temp_t1['id_fuente']==2].groupby('coctel').agg({'id':'count'}).reset_index()
-elif option_fuente_t1 == 'Redes':
-    temp_t1 = temp_t1[temp_t1['id_fuente']==3].groupby('coctel').agg({'id':'count'}).reset_index()
-else:
-    temp_t1 = temp_t1.groupby('coctel').agg({'id':'count'}).reset_index()
+temp_t1 = temp_coctel_fuente[(temp_coctel_fuente['fecha_registro']>=fecha_inicio_t1)&
+                             (temp_coctel_fuente['fecha_registro']<=fecha_fin_t1)&
+                          (temp_coctel_fuente['lugar'].isin(option_lugar_t1))]
 
-st.write(f"Proporción de cocteles en {option_lugar_t1} entre {fecha_inicio_t1} y {fecha_fin_t1}")
+temp_t1["Fuente"] = temp_t1["id_fuente"].map(id_fuente_dict)
 
+if option_fuente_t1:
+    temp_t1 = temp_t1[temp_t1['Fuente'].isin(option_fuente_t1)]
+
+temp_t1 = temp_t1.groupby('coctel').agg({'id':'count'}).reset_index()
+
+st.write(f"Proporción de cocteles en {', '.join(option_lugar_t1)} entre {fecha_inicio_t1.strftime('%d.%m.%Y')} y {fecha_fin_t1.strftime('%d.%m.%Y')}")
 if not temp_t1.empty:
     temp_t1 = temp_t1.rename(columns={'coctel':'Fuente','id':'Cantidad'})
     temp_t1['Proporción'] = temp_t1['Cantidad'] / temp_t1['Cantidad'].sum()
@@ -168,7 +224,7 @@ else:
 
 st.subheader("3.- Gráfico semanal por porcentaje de cocteles en lugar y fecha específica")
 
-col1, col2, col3= st.columns(3)
+col1, col2, col3, col4 = st.columns(4)
 with col1:
     fecha_inicio_g1 = st.date_input(
     "Fecha Inicio g3",
@@ -177,7 +233,13 @@ with col2:
     fecha_fin_g1 = st.date_input(
     "Fecha Fin g3",
     format="DD.MM.YYYY")
+
 with col3:
+    option_fuente_g1 = st.selectbox(
+    "Fuente g3",
+    ("Radio", "TV", "Redes","Todos"))
+
+with col4:
     option_lugar_g1 = st.selectbox(
     "Lugar g3",
     lugares_uniques
@@ -188,6 +250,14 @@ fecha_fin_g1 = pd.to_datetime(fecha_fin_g1,format='%Y-%m-%d')
 
 temp_g1 = temp_coctel_fuente[(temp_coctel_fuente['fecha_registro']>=fecha_inicio_g1)&(temp_coctel_fuente['fecha_registro']<=fecha_fin_g1)&
                           (temp_coctel_fuente['lugar']==option_lugar_g1)]
+
+if option_fuente_g1 == 'Radio':
+    temp_g1 = temp_g1[temp_g1['id_fuente']==1]
+elif option_fuente_g1 == 'TV':
+    temp_g1 = temp_g1[temp_g1['id_fuente']==2]
+elif option_fuente_g1 == 'Redes':
+    temp_g1 = temp_g1[temp_g1['id_fuente']==3]
+
 
 if not temp_g1.empty:
     temp_g1['semana'] = temp_g1['fecha_registro'].dt.isocalendar().year.map(str) +'-'+temp_g1['fecha_registro'].dt.isocalendar().week.map(str)
@@ -206,13 +276,18 @@ if not temp_g1.empty:
     temp_g1['porcentaje'] = temp_g1['porcentaje'].fillna(0)
     temp_g1 = temp_g1.sort_values('fecha_registro')
     temp_g1['semana'] = temp_g1['semana'].map(str)
+    temp_g1["porcentaje"] = temp_g1["porcentaje"] * 100 # a dos decimales
+    temp_g1["porcentaje"] = temp_g1["porcentaje"].map('{:.2f}'.format)
 
     st.write(f"Gráfico semanal por porcentaje de cocteles en {option_lugar_g1} entre {fecha_inicio_g1} y {fecha_fin_g1}")
 
     fig1 = go.Figure()
     fig1.add_trace(
             go.Scatter(x=temp_g1['semana'], y=temp_g1['porcentaje'], mode='lines+markers'))
-    fig1.update_xaxes(type = "category")
+    fig1.update_xaxes(type = "category",
+                      title_text='Semana'
+                      )
+    fig1.update_yaxes(title_text='Porcentaje de cocteles %')
     st.plotly_chart(fig1)
 
 else:
@@ -277,6 +352,10 @@ if not temp_g2.empty:
     temp_g2['en_contra'] = temp_g2['en_contra'].fillna(0)
     temp_g2['a_favor'] = temp_g2['a_favor'] / temp_g2['Cantidad']
     temp_g2['en_contra'] = temp_g2['en_contra'] / temp_g2['Cantidad']
+    temp_g2["a_favor"] = temp_g2["a_favor"] * 100
+    temp_g2["en_contra"] = temp_g2["en_contra"] * 100
+    temp_g2["a_favor"] = temp_g2["a_favor"].map('{:.2f}'.format)
+    temp_g2["en_contra"] = temp_g2["en_contra"].map('{:.2f}'.format)
 
     st.write(f"Gráfico semanal de noticias a favor y en contra en {option_lugar_g2} entre {fecha_inicio_g2} y {fecha_fin_g2}")
     
@@ -285,7 +364,10 @@ if not temp_g2.empty:
             go.Scatter(x=temp_g2['semana'], y=temp_g2['a_favor'], mode='lines+markers', name='A favor', fillcolor = 'blue'))
     fig2.add_trace(
             go.Scatter(x=temp_g2['semana'], y=temp_g2['en_contra'], mode='lines+markers', name='En contra', line=dict(color='red'), marker=dict(color='red')))
-    fig2.update_xaxes(type = "category")
+    fig2.update_xaxes(type = "category",
+                      title_text='Semana'
+                      )
+    fig2.update_yaxes(title_text='Porcentaje de noticias %')
     st.plotly_chart(fig2)
 
 else:
@@ -341,7 +423,7 @@ if not temp_g3.empty:
     st.plotly_chart(fig)
 
     # cuadro con el ultimo porcentaje semanal
-    st.write(f"Último porcentaje de cocteles por lugar entre {fecha_inicio_g3} y {fecha_fin_g3} según {option_fuente_g3}")
+    st.write(f"Porcentaje de cocteles por lugar en la última semana entre {fecha_inicio_g3} y {fecha_fin_g3} según {option_fuente_g3}")
     temp_g3 = temp_g3.sort_values('semana')
     temp_g3 = temp_g3.groupby('lugar').last().reset_index()
     temp_g3 = temp_g3[['lugar','coctel_mean']]
@@ -579,7 +661,8 @@ if not temp_g7.empty:
                    color='Tipo de Medio',
                    barmode='group',
                    labels={'count': 'Conteo', 'Posición': 'Posición', 'Tipo de Medio': 'Tipo de Medio'},
-                   color_discrete_map={'radio': '#c54b8c', 'tv': '#e4d00a', 'redes': '#8b9dce'}
+                   color_discrete_map={'radio': '#c54b8c', 'tv': '#e4d00a', 'redes': '#8b9dce'},
+                   text='count'
                    )
 
     fig_7.update_layout(title='Conteo de posiciones por tipo de medio',
@@ -850,6 +933,7 @@ if not temp_g18.empty:
                     labels={'año_mes': 'Año y Mes',
                             'coctel': 'Número de Cocteles',
                             'Fuente': 'Fuente'},
+                    text='coctel', 
                     color_discrete_map = {'radio': '#c54b8c', 'tv': '#e4d00a', 'redes': '#8b9dce'}
                     )
 
@@ -922,21 +1006,22 @@ if not temp_g20.empty:
     conteo_notas_20_pct = conteo_notas_20_pct[["año_mes", "a_favor_pct", "en_contra_pct", "neutral_pct"]]
 
     fig_20 = px.bar(conteo_notas_20_pct,
-                    x='año_mes',
-                    y=['a_favor_pct', 'en_contra_pct', 'neutral_pct'],
-                    barmode='stack',
-                    title='Porcentaje de notas a favor, en contra y neutrales por mes',
-                    labels={'año_mes': 'Año y Mes',
-                            'value': 'Porcentaje',
-                            'variable': 'Tipo de Nota'},
-                    color_discrete_map={'a_favor_pct': 'blue',
-                                        'en_contra_pct': 'red',
-                                        'neutral_pct': 'gray'}
-                    )
+                x='año_mes',
+                y=['a_favor_pct', 'en_contra_pct', 'neutral_pct'],
+                barmode='stack',
+                title='Porcentaje de notas a favor, en contra y neutrales por mes',
+                labels={'año_mes': 'Año y Mes',
+                        'value': 'Porcentaje',
+                        'variable': 'Tipo de Nota'},
+                text_auto=True,
+                color_discrete_map={'a_favor_pct': 'blue',
+                                    'en_contra_pct': 'red',
+                                    'neutral_pct': 'gray'}
+                )
 
-    conteo_notas_20_pct["a_favor_pct"] = conteo_notas_20_pct["a_favor_pct"].map("{:.2f}%".format)
-    conteo_notas_20_pct["en_contra_pct"] = conteo_notas_20_pct["en_contra_pct"].map("{:.2f}%".format)
-    conteo_notas_20_pct["neutral_pct"] = conteo_notas_20_pct["neutral_pct"].map("{:.2f}%".format)
+    conteo_notas_20_pct["a_favor_pct"] = conteo_notas_20_pct["a_favor_pct"].map("{:.2f}".format)
+    conteo_notas_20_pct["en_contra_pct"] = conteo_notas_20_pct["en_contra_pct"].map("{:.2f}".format)
+    conteo_notas_20_pct["neutral_pct"] = conteo_notas_20_pct["neutral_pct"].map("{:.2f}".format)
 
     st.dataframe(conteo_notas_20_pct, hide_index=True)
 
@@ -1063,6 +1148,7 @@ if not temp_g23.empty:
         x='descripcion',
         y='frecuencia',
         color='id_posicion',
+        text='frecuencia',
         barmode='stack',
         labels={'frecuencia': 'Frecuencia', 'descripcion': 'Tema', 'id_posicion': 'Posición'},
         category_orders={'descripcion': top_10_temas},
@@ -1123,11 +1209,14 @@ if not temp_g24.empty:
     df_top_10_24 = df_grouped_24[df_grouped_24['descripcion'].isin(top_10_temas_24)]
 
     df_top_10_24['porcentaje'] = df_top_10_24['frecuencia']/df_grouped_24['frecuencia'].sum()
+    df_top_10_24["porcentaje"] = df_top_10_24["porcentaje"]*100
+    df_top_10_24['porcentaje'] = df_top_10_24['porcentaje'].apply(lambda x:"{:.2f}".format(x))
 
     fig_24 = px.bar(df_top_10_24,
                     x="porcentaje",
                     y="descripcion",
                     orientation='h',
+                    text="porcentaje", 
                     labels={'porcentaje': 'Porcentaje', 'descripcion': 'Temas'}
                     )
 
@@ -1193,7 +1282,8 @@ if option_fuente_g25 == "Redes" and not temp_g25_redes.empty:
                         color='id_posicion',
                         barmode='stack',
                         labels={'frecuencia': 'Frecuencia', 'nombre_facebook_page': 'Pagina Facebook', 'id_posicion': 'Posición'},
-                        color_discrete_map=color_posicion_dict
+                        color_discrete_map=color_posicion_dict,
+                        text = 'frecuencia'
                         )
     st.write(f"Tendencia de las notas emitidas por {option_fuente_g25} en {option_lugar_g25} entre {fecha_inicio_g25} y {fecha_fin_g25}")
 
@@ -1209,7 +1299,8 @@ elif option_fuente_g25 != "Redes" and not temp_g25_medio.empty:
                         color='id_posicion',
                         barmode='stack',
                         color_discrete_map=color_posicion_dict,
-                        labels={'frecuencia': 'Frecuencia', 'nombre_canal': 'Canal', 'id_posicion': 'Posición'}
+                        labels={'frecuencia': 'Frecuencia', 'nombre_canal': 'Canal', 'id_posicion': 'Posición'},
+                        text = 'frecuencia'
                         )
     st.write(f"Tendencia de las notas emitidas por {option_fuente_g25} en {option_lugar_g25} entre {fecha_inicio_g25} y {fecha_fin_g25}")
 
@@ -1254,7 +1345,8 @@ if not temp_g26.empty:
                     y='frecuencia',
                     labels={'frecuencia': 'Frecuencia', 'id_posicion': 'Posición'},
                     color='id_posicion',
-                    color_discrete_map=color_posicion_dict
+                    color_discrete_map=color_posicion_dict,
+                    text='frecuencia'
                     )
 
     st.plotly_chart(fig_26, use_container_width=True)
@@ -1318,7 +1410,8 @@ if not temp_g27.empty:
                     barmode='stack',
                     color_discrete_map={'a favor': 'blue', 'potencialmente a favor': 'lightblue', 'neutral': 'gray', 'potencialmente en contra': 'orange', 'en contra': 'red'},
                     labels={'frecuencia': 'Frecuencia', 'nombre': 'Actor', 'posicion': 'Posición'},
-                    category_orders={'nombre': top_10_actores}
+                    category_orders={'nombre': top_10_actores},
+                    text='frecuencia'
                     )
 
     st.plotly_chart(fig_27, use_container_width=True)
