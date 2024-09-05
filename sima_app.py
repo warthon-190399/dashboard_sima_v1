@@ -67,7 +67,7 @@ st.divider()
 
 #%% 1.- PROPORCION COCTELES solo fechas y lugar
 
-st.subheader("1.- Proporción de cocteles en lugar y fecha específica")
+st.subheader("sn.- Proporción de cocteles en lugar y fecha específica")
 
 col1, col2, col3 = st.columns(3)
 with col1:
@@ -99,29 +99,32 @@ def proporcion_cocteles(df):
     df['Fuente'] = df['Fuente'].replace({0:'Otras Fuentes',1:'Coctel Noticias'})
     return df
 
-temp_c1_radio = temp_c1[temp_c1['id_fuente']==1].groupby('coctel').agg({'id':'count'}).reset_index()
-temp_c1_radio = proporcion_cocteles(temp_c1_radio)
+if not temp_c1.empty:
+    temp_c1_radio = temp_c1[temp_c1['id_fuente']==1].groupby('coctel').agg({'id':'count'}).reset_index()
+    temp_c1_radio = proporcion_cocteles(temp_c1_radio)
 
-temp_c1_tv = temp_c1[temp_c1['id_fuente']==2].groupby('coctel').agg({'id':'count'}).reset_index()
-temp_c1_tv = proporcion_cocteles(temp_c1_tv)
+    temp_c1_tv = temp_c1[temp_c1['id_fuente']==2].groupby('coctel').agg({'id':'count'}).reset_index()
+    temp_c1_tv = proporcion_cocteles(temp_c1_tv)
 
-temp_c1_redes = temp_c1[temp_c1['id_fuente']==3].groupby('coctel').agg({'id':'count'}).reset_index()
-temp_c1_redes = proporcion_cocteles(temp_c1_redes)
+    temp_c1_redes = temp_c1[temp_c1['id_fuente']==3].groupby('coctel').agg({'id':'count'}).reset_index()
+    temp_c1_redes = proporcion_cocteles(temp_c1_redes)
+    st.write(f"Proporción de cocteles en {option_lugar_c1} entre {fecha_inicio_c1.strftime('%d.%m.%Y')} y {fecha_fin_c1.strftime('%d.%m.%Y')}")
 
-st.write(f"Proporción de cocteles en {option_lugar_c1} entre {fecha_inicio_c1.strftime('%d.%m.%Y')} y {fecha_fin_c1.strftime('%d.%m.%Y')}")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.write("Radio")
+        st.dataframe(temp_c1_radio, hide_index=True)
 
-col1, col2, col3 = st.columns(3)
-with col1:
-    st.write("Radio")
-    st.dataframe(temp_c1_radio, hide_index=True)
+    with col2:
+        st.write("TV")
+        st.dataframe(temp_c1_tv, hide_index=True)
 
-with col2:
-    st.write("TV")
-    st.dataframe(temp_c1_tv, hide_index=True)
+    with col3:
+        st.write("Redes")
+        st.dataframe(temp_c1_redes, hide_index=True)
 
-with col3:
-    st.write("Redes")
-    st.dataframe(temp_c1_redes, hide_index=True)
+else:
+    st.warning("No hay datos para mostrar")
 #%% 1.- PROPORCION COCTELES
 
 st.subheader("1.- Proporción de cocteles en lugar, fuentes y fechas específicas")
@@ -433,6 +436,71 @@ if not temp_g3.empty:
 
 else:
     st.warning("No hay datos para mostrar")
+
+#%% #.- Top 3 mejores lugares segun fechas y fuente
+
+st.subheader("#.- Top 3 mejores porcentajes de coctel semanal por lugar en fuente y fecha específica")
+
+col1, col2, col3 = st.columns(3)
+with col1:
+    fecha_inicio_sn2 = st.date_input(
+    "Fecha Inicio sn_2",
+    format="DD.MM.YYYY")
+
+with col2:
+    fecha_fin_sn2 = st.date_input(
+    "Fecha Fin sn_2",
+    format="DD.MM.YYYY")
+
+with col3:
+    option_fuente_sn2 = st.selectbox(
+    "Fuente sn_2",
+    ("Radio", "TV", "Redes"))
+
+fecha_inicio_sn2 = pd.to_datetime(fecha_inicio_sn2,format='%Y-%m-%d')
+fecha_fin_sn2 = pd.to_datetime(fecha_fin_sn2,format='%Y-%m-%d')
+
+temp_sn2 = temp_coctel_fuente[(temp_coctel_fuente['fecha_registro']>=fecha_inicio_sn2) &
+                                (temp_coctel_fuente['fecha_registro']<=fecha_fin_sn2)]
+
+if option_fuente_sn2 == 'Radio':
+    temp_sn2 = temp_sn2[temp_sn2['id_fuente']==1]
+elif option_fuente_sn2 == 'TV':
+    temp_sn2 = temp_sn2[temp_sn2['id_fuente']==2]
+elif option_fuente_sn2 == 'Redes':
+    temp_sn2 = temp_sn2[temp_sn2['id_fuente']==3]
+
+if not temp_sn2.empty:
+    temp_sn2["semana"] = temp_sn2['fecha_registro'].dt.isocalendar().year.map(str) +'-'+temp_sn2['fecha_registro'].dt.isocalendar().week.map(lambda x: f"{x:02}")
+    temp_sn2 = temp_sn2.groupby(['lugar','semana']).agg({'coctel':'mean'}).reset_index()
+
+    #we need create 1.- top 3 lugares with the highest percentage of coctel in the last week and 2.- bar chart of the top 3 places
+    temp_sn2_last = temp_sn2.sort_values('semana')
+    temp_sn2_last = temp_sn2.groupby(["lugar"]).last().reset_index()
+    temp_sn2_last = temp_sn2_last.sort_values('coctel',ascending=False).head(3).reset_index(drop=True)
+    temp_sn2_last["coctel"] = temp_sn2_last["coctel"] * 100
+    temp_sn2_last["coctel"] = temp_sn2_last["coctel"].map('{:.2f}'.format)
+    
+    temp_sn2 = temp_sn2[temp_sn2['lugar'].isin(temp_sn2_last['lugar'])]
+    temp_sn2["coctel"] = temp_sn2["coctel"] * 100
+
+    fig_sn2 = px.line(temp_sn2,
+                    x='semana',
+                    y='coctel',
+                    color='lugar',
+                    title='Top 3 lugares con mayor porcentaje de cocteles',
+                    labels = {'semana':'Semana','coctel':'Porcentaje de cocteles %'}
+                    )
+    
+    fig_sn2.update_xaxes(type='category')
+    st.write(f"Top 3 lugares con mayor porcentaje de cocteles en la última semana entre {fecha_inicio_sn2} y {fecha_fin_sn2} según {option_fuente_sn2}")    
+    st.dataframe(temp_sn2_last, hide_index=True)
+    st.plotly_chart(fig_sn2)
+
+else:
+    st.warning("No hay datos para mostrar")
+
+
 
 #%% 5.- Top 3 mejores radios, redes, tv usar dataframes de programas y redes
 
@@ -826,7 +894,7 @@ else:
 
 #%% 13.- Reporte quincenal acerca de cuantas radios, redes y tv generaron coctel
 
-st.subheader("12.- Reporte quincenal acerca de cuantas radios, redes y tv generaron coctel")
+st.subheader("12.- Reporte semanal acerca de cuantas radios, redes y tv generaron coctel")
 
 col1, col2 = st.columns(2)
 with col1:
@@ -852,14 +920,14 @@ temp_g13_fb = temp_coctel_fuente_fb[(temp_coctel_fuente_fb['fecha_registro'] >= 
                                     (temp_coctel_fuente_fb['lugar'].isin(option_lugar_g13))]
 
 if not temp_g13.empty:
-    temp_g13["quincena"] = temp_g13['fecha_registro'].apply(lambda x: f"{x.year}-{x.month}-{1 if x.day <= 15 else 2}")
+    temp_g13["semana"] = temp_g13['fecha_registro'].dt.isocalendar().year.map(str) +'-'+temp_g13['fecha_registro'].dt.isocalendar().week.map(str)
 
     temp_merged = pd.merge(temp_g13, temp_g13_fb[['fecha_registro', 'acontecimiento', 'coctel','id_fuente', 'lugar', 'nombre_facebook_page']], on=['fecha_registro', 'acontecimiento', 'coctel','id_fuente', 'lugar'], how='left')
     temp_merged['id_canal'] = temp_merged['id_canal'].fillna(temp_merged['nombre_facebook_page'])
     
     temp_g13_coctel = temp_merged[temp_merged['coctel'] == 1] #solo coctel
 
-    conteo_total_g13 = temp_g13_coctel.groupby(['id_fuente', 'lugar', 'id_canal','quincena']).size().reset_index(name='count')
+    conteo_total_g13 = temp_g13_coctel.groupby(['id_fuente', 'lugar', 'id_canal','semana']).size().reset_index(name='count')
 
     #mapeo de fuente
     conteo_total_g13['Fuente'] = conteo_total_g13['id_fuente'].astype(int).map(id_fuente_dict)
@@ -884,19 +952,20 @@ st.subheader("13.- Conteo mensual de la cantidad de coctel utilizado por región
 col1, col2 = st.columns(2)
 
 with col1:
-    fecha_inicio_g18 = st.date_input("Fecha Inicio g13",
-                                    format="DD.MM.YYYY")
+    year_inicio_g18 = st.selectbox("Año Inicio g13", list(range(2023, 2025)), index=0)
+    month_inicio_g18 = st.selectbox("Mes Inicio g13", list(range(1, 13)), index=0)
 
 with col2:
-    fecha_fin_g18 = st.date_input("Fecha Fin g13",
-                                 format="DD.MM.YYYY")
+    year_fin_g18 = st.selectbox("Año Fin g13", list(range(2023, 2025)), index=1)
+    month_fin_g18 = st.selectbox("Mes Fin g13", list(range(1, 13)), index=11)
+
 
 option_lugar_g18 = st.multiselect("Lugar g13",
                                   lugares_uniques,
                                   lugares_uniques)
 
-fecha_inicio_g18 = pd.to_datetime(fecha_inicio_g18, format='%Y-%m-%d')
-fecha_fin_g18 = pd.to_datetime(fecha_fin_g18, format='%Y-%m-%d')
+fecha_inicio_g18 = pd.to_datetime(f'{year_inicio_g18}-{month_inicio_g18}-01')
+fecha_fin_g18 = pd.to_datetime(f'{year_fin_g18}-{month_fin_g18}-01') + pd.offsets.MonthEnd(1)
 
 temp_g18 = temp_coctel_fuente[(temp_coctel_fuente['fecha_registro'] >= fecha_inicio_g18) &
                                 (temp_coctel_fuente['fecha_registro'] <= fecha_fin_g18) &
@@ -944,7 +1013,7 @@ else:
 
 #%% 20.- Se tiene cuadros divididos por radio y redes en el cual se muestran las notas en general que sean a favor ( a favor y mayormente a favor), neutral y en contra (en contra y mayormente en contra)
 
-st.subheader("14.- Cuadros divididos por radio y redes en el cual se muestran el pocentaje de notas que sean a favor, neutral y en contra")
+st.subheader("14.- Porcentaje de notas que sean a favor, neutral y en contra")
 
 col1, col2 = st.columns(2)
 
@@ -989,8 +1058,6 @@ if not temp_g20.empty:
     conteo_notas_20 = temp_g20.groupby('año_mes').agg({'a_favor': 'sum',
                                                     'en_contra': 'sum',
                                                     'neutral': 'sum'}).reset_index()
-    #st.write("Notas a favor, en contra y neutrales por mes")
-    #st.dataframe(conteo_notas_20, hide_index=True)
 
     st.write(f"Porcentaje de notas a favor, en contra y neutrales por mes en {option_lugar_g20} entre {fecha_inicio_g20} y {fecha_fin_g20}")
 
@@ -1026,7 +1093,7 @@ if not temp_g20.empty:
     st.dataframe(conteo_notas_20_pct, hide_index=True)
 
     st.plotly_chart(fig_20)
-
+    st.write("Los porcentajes se calcularon sobre el total de notas considerando coctel y otras fuentes")
 else:
     st.warning("No hay datos para mostrar")
 
