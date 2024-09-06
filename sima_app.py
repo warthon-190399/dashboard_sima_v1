@@ -690,25 +690,38 @@ else:
 
 st.subheader("8.- Gráfico de barras contando posiciones en lugar y fecha específica")
 
-col1, col2, col3 = st.columns(3)
+col1, col2, col3, col4 = st.columns(4)
 with col1:
     fecha_inicio_g7 = st.date_input("Fecha Inicio g8",
                                     format="DD.MM.YYYY")
-
 with col2:
     fecha_fin_g7 = st.date_input("Fecha Fin g8",
                                  format="DD.MM.YYYY")
-    
 with col3:
     option_lugar_g7 = st.selectbox(
         "Lugar g8",
         lugares_uniques
         )
+with col4:
+    option_nota_g7 = st.selectbox(
+        "Nota g8",
+        ("Con coctel", "Sin coctel", "Todos"))
 
 fecha_inicio_g7 = pd.to_datetime(fecha_inicio_g7, format='%Y-%m-%d')
 fecha_fin_g7 = pd.to_datetime(fecha_fin_g7, format='%Y-%m-%d')
 
-temp_g7 = temp_coctel_fuente[(temp_coctel_fuente['fecha_registro'] >= fecha_inicio_g7) & (temp_coctel_fuente['fecha_registro'] <= fecha_fin_g7) & (temp_coctel_fuente['lugar'] == option_lugar_g7)]
+temp_g7 = temp_coctel_fuente[(temp_coctel_fuente['fecha_registro'] >= fecha_inicio_g7) &
+                             (temp_coctel_fuente['fecha_registro'] <= fecha_fin_g7) &
+                             (temp_coctel_fuente['lugar'] == option_lugar_g7)]
+
+if option_nota_g7 == 'Con coctel':
+    temp_g7 = temp_g7[temp_g7['coctel'] == 1]
+    titulo_g7 = f'Conteo de posiciones con coctel en {option_lugar_g7} por tipo de medio'
+elif option_nota_g7 == 'Sin coctel':
+    temp_g7 = temp_g7[temp_g7['coctel'] == 0]
+    titulo_g7 = f'Conteo de posiciones sin coctel en {option_lugar_g7} por tipo de medio'
+else:
+    titulo_g7 = f'Conteo de posiciones en {option_lugar_g7} por tipo de medio'
 
 if not temp_g7.empty:
     temp_g7['semana'] = temp_g7['fecha_registro'].dt.isocalendar().year.map(str) +'-'+temp_g7['fecha_registro'].dt.isocalendar().week.map(str)
@@ -716,25 +729,24 @@ if not temp_g7.empty:
     conteo_total['Posición'] = conteo_total['id_posicion'].map(id_posicion_dict)
     conteo_total['Tipo de Medio'] = conteo_total['id_fuente'].map(id_fuente_dict)
     conteo_total = conteo_total.dropna()
-    
-    st.write(f"Gráfico de barras contando posiciones en {option_lugar_g7} entre {fecha_inicio_g7} y {fecha_fin_g7}")
 
     fig_7 = px.bar(conteo_total,
                    x='Posición',
                    y='count',
                    color='Tipo de Medio',
+                   title=titulo_g7,
                    barmode='group',
                    labels={'count': 'Conteo', 'Posición': 'Posición', 'Tipo de Medio': 'Tipo de Medio'},
                    color_discrete_map={'radio': '#c54b8c', 'tv': '#e4d00a', 'redes': '#8b9dce'},
                    text='count'
                    )
 
-    fig_7.update_layout(title='Conteo de posiciones por tipo de medio',
-                        xaxis_title='Posición',
+    fig_7.update_layout(xaxis_title='Posición',
                         yaxis_title='Conteo',
                         legend_title='Tipo de Medio')
 
     st.plotly_chart(fig_7)
+    st.write(f"Gráfico de barras contando posiciones en {option_lugar_g7} entre {fecha_inicio_g7.strftime('%Y-%m-%d')} y {fecha_fin_g7.strftime('%Y-%m-%d')}")
 
 else:
     st.warning("No hay datos para mostrar")
@@ -743,19 +755,21 @@ else:
 
 st.subheader("9.- Gráfico de dona que representa el porcentaje de posiciones en lugar y fecha específica")
 
-col1, col2, col3 = st.columns(3)
+col1, col2, col3, col4 = st.columns(4)
 with col1:
     fecha_inicio_g8 = st.date_input("Fecha Inicio g9",
                                     format="DD.MM.YYYY")
-
 with col2:
     fecha_fin_g8 = st.date_input("Fecha Fin g9",
                                  format="DD.MM.YYYY")
-    
 with col3:
     option_fuente_g8 = st.selectbox(
     "Fuente g9",
     ("Radio", "TV", "Redes","Todos"))
+with col4:
+    option_nota_g8 = st.selectbox(
+    "Nota g9",
+    ("Con coctel", "Sin coctel", "Todos"))
 
 option_lugar_g8 = st.multiselect(
 "Lugar g9",
@@ -764,7 +778,18 @@ lugares_uniques,lugares_uniques)
 fecha_inicio_g8 = pd.to_datetime(fecha_inicio_g8, format='%Y-%m-%d')
 fecha_fin_g8 = pd.to_datetime(fecha_fin_g8, format='%Y-%m-%d')
 
-temp_g8 = temp_coctel_fuente[(temp_coctel_fuente['fecha_registro'] >= fecha_inicio_g8) & (temp_coctel_fuente['fecha_registro'] <= fecha_fin_g8) & (temp_coctel_fuente['lugar'].isin(option_lugar_g8))]
+temp_g8 = temp_coctel_fuente[(temp_coctel_fuente['fecha_registro'] >= fecha_inicio_g8) &
+                             (temp_coctel_fuente['fecha_registro'] <= fecha_fin_g8) & 
+                             (temp_coctel_fuente['lugar'].isin(option_lugar_g8))]
+
+if option_nota_g8 == 'Con coctel':
+    temp_g8 = temp_g8[temp_g8['coctel']==1]
+    titulo_g8 = 'Porcentaje de posiciones con coctel respecto del total'
+elif option_nota_g8 == 'Sin coctel':
+    temp_g8 = temp_g8[temp_g8['coctel']==0]
+    titulo_g8 = 'Porcentaje de posiciones sin coctel respecto del total'
+else:
+    titulo_g8 = 'Porcentaje de posiciones respecto del total'
 
 if option_fuente_g8 == 'Radio':
     temp_g8 = temp_g8[temp_g8['id_fuente']==1]
@@ -783,16 +808,16 @@ if not temp_g8.empty:
     conteo_total_g8['Porcentaje'] = conteo_total_g8['count'] / conteo_total_g8['count'].sum()
     conteo_total_g8['Porcentaje'] = conteo_total_g8['Porcentaje'].map('{:.0%}'.format)
 
-    st.write(f"Gráfico de dona que representa el porcentaje de posiciones en {option_lugar_g8} entre {fecha_inicio_g8} y {fecha_fin_g8}")
     fig_8 = px.pie(conteo_total_g8,
                    values='count',
                    names='Posición',
-                   title='Porcentaje de posiciones respecto del total',
+                   title=titulo_g8,
                    color='Posición',
                    color_discrete_map=color_posicion_dict,
                    hole=0.3
                    )
     st.plotly_chart(fig_8)
+    st.write(f"Gráfico de dona que representa el porcentaje de posiciones en {', '.join(option_lugar_g8)} entre {fecha_inicio_g8.strftime('%Y-%m-%d')} y {fecha_fin_g8.strftime('%Y-%m-%d')}")
 
 else:
     st.warning("No hay datos para mostrar")
@@ -1011,7 +1036,7 @@ else:
 
 st.subheader("14.- Porcentaje de notas que sean a favor, neutral y en contra")
 
-col1, col2 = st.columns(2)
+col1, col2, col3 = st.columns(3)
 
 with col1:
     fecha_inicio_g20 = st.date_input("Fecha Inicio g14",
@@ -1020,6 +1045,11 @@ with col1:
 with col2:
     fecha_fin_g20 = st.date_input("Fecha Fin g14",
                                  format="DD.MM.YYYY")
+with col3:
+    option_nota_g20 = st.selectbox(
+    "Notas g14",
+    ("Con coctel", "Sin coctel", "Todos"))
+
 
 option_lugar_g20 = st.multiselect("Lugar g14",
                                    lugares_uniques,
@@ -1031,6 +1061,15 @@ fecha_fin_g20 = pd.to_datetime(fecha_fin_g20, format='%Y-%m-%d')
 temp_g20 = temp_coctel_fuente[(temp_coctel_fuente['fecha_registro'] >= fecha_inicio_g20) &
                                 (temp_coctel_fuente['fecha_registro'] <= fecha_fin_g20) &
                                 (temp_coctel_fuente['lugar'].isin(option_lugar_g20))].dropna()
+
+if option_nota_g20 == "Con coctel":
+    temp_g20 = temp_g20[temp_g20['coctel'] == 1]
+    titulo_g20 = "Porcentaje de notas que sean a favor, neutral y en contra con coctel"
+elif option_nota_g20 == "Sin coctel":
+    temp_g20 = temp_g20[temp_g20['coctel'] == 0]
+    titulo_g20 = "Porcentaje de notas que sean a favor, neutral y en contra sin coctel" 
+else:
+    titulo_g20 = "Porcentaje de notas que sean a favor, neutral y en contra"
 
 if not temp_g20.empty:
 
@@ -1052,10 +1091,10 @@ if not temp_g20.empty:
 
 
     conteo_notas_20 = temp_g20.groupby('año_mes').agg({'a_favor': 'sum',
-                                                    'en_contra': 'sum',
-                                                    'neutral': 'sum'}).reset_index()
+                                                        'en_contra': 'sum',
+                                                        'neutral': 'sum'}).reset_index()
 
-    st.write(f"Porcentaje de notas a favor, en contra y neutrales por mes en {option_lugar_g20} entre {fecha_inicio_g20} y {fecha_fin_g20}")
+    st.write(f"Porcentaje de notas que sean a favor, neutral y en contra en {option_lugar_g20} entre {fecha_inicio_g20.strftime('%d-%m-%Y')} y {fecha_fin_g20.strftime('%d-%m-%Y')}")
 
     conteo_notas_20_pct = conteo_notas_20.copy()
 
@@ -1067,12 +1106,11 @@ if not temp_g20.empty:
     conteo_notas_20_pct["neutral_pct"] = (conteo_notas_20_pct['neutral'] / conteo_notas_20_pct['total']) * 100
 
     conteo_notas_20_pct = conteo_notas_20_pct[["año_mes", "a_favor_pct", "en_contra_pct", "neutral_pct"]]
-
     fig_20 = px.bar(conteo_notas_20_pct,
                 x='año_mes',
                 y=['a_favor_pct', 'en_contra_pct', 'neutral_pct'],
                 barmode='stack',
-                title='Porcentaje de notas a favor, en contra y neutrales por mes',
+                title=titulo_g20,
                 labels={'año_mes': 'Año y Mes',
                         'value': 'Porcentaje',
                         'variable': 'Tipo de Nota'},
@@ -1081,10 +1119,12 @@ if not temp_g20.empty:
                                     'en_contra_pct': 'red',
                                     'neutral_pct': 'gray'}
                 )
-
+    fig_20.update_layout(barmode='stack', xaxis={'categoryorder':'category ascending'})
+    fig_20.for_each_trace(lambda t: t.update(name=t.name.replace('_pct', ' (%)')))
     conteo_notas_20_pct["a_favor_pct"] = conteo_notas_20_pct["a_favor_pct"].map("{:.2f}".format)
     conteo_notas_20_pct["en_contra_pct"] = conteo_notas_20_pct["en_contra_pct"].map("{:.2f}".format)
     conteo_notas_20_pct["neutral_pct"] = conteo_notas_20_pct["neutral_pct"].map("{:.2f}".format)
+    conteo_notas_20_pct = conteo_notas_20_pct.rename(columns={"a_favor_pct": "A favor (%)", "en_contra_pct": "En contra (%)", "neutral_pct": "Neutral (%)"})
 
     st.dataframe(conteo_notas_20_pct, hide_index=True)
 
@@ -1095,9 +1135,9 @@ else:
 
 #%% 22.- Se realizan gráficos de tendencia de los mensajes emitidos por radio o redes por alguna región, por ejemplo:
 
-st.subheader("15.- Proporción de mensajes emitidos por fuente en lugar y fecha específica")
+st.subheader("15.- Proporción de Mensajes Emitidos por Fuente y Tipo de Nota en un Lugar y Fecha Específica")
 
-col1, col2, col3, col4 = st.columns(4)
+col1, col2 = st.columns(2) 
 with col1:
     fecha_inicio_g22 = st.date_input(
     "Fecha Inicio g15",
@@ -1106,17 +1146,21 @@ with col2:
     fecha_fin_g22 = st.date_input(
     "Fecha Fin g15",
     format="DD.MM.YYYY")
-with col3:
+
+col1, col2, col3 = st.columns(3)
+with col1:
     option_fuente_g22 = st.selectbox(
     "Fuente g15",
     ("Radio", "TV", "Redes","Todos"),)
-with col4:
+with col2:
     option_lugar_g22 = st.selectbox(
     "Lugar g15",
     lugares_uniques)
-
-
-st.write(f"Proporcion de mensajes emitidos por {option_fuente_g22} en {option_lugar_g22} entre {fecha_inicio_g22} y {fecha_fin_g22}")
+with col3:
+    option_nota_g22 = st.selectbox(
+    "Nota g15",
+    ("Con coctel", "Sin coctel", "Todos")
+    )
 
 fecha_inicio_g22 = pd.to_datetime(fecha_inicio_g22,format='%Y-%m-%d')
 fecha_fin_g22 = pd.to_datetime(fecha_fin_g22,format='%Y-%m-%d')
@@ -1124,6 +1168,15 @@ fecha_fin_g22 = pd.to_datetime(fecha_fin_g22,format='%Y-%m-%d')
 temp_g22 = temp_coctel_fuente[(temp_coctel_fuente['fecha_registro']>=fecha_inicio_g22) & 
                               (temp_coctel_fuente['fecha_registro']<=fecha_fin_g22) &
                               (temp_coctel_fuente['lugar']==option_lugar_g22)]
+
+if option_nota_g22 == 'Con coctel':
+    temp_g22 = temp_g22[temp_g22['coctel'] == 1]
+    titulo = f"Proporción de mensajes emitidos con coctel por {option_fuente_g22} en {option_lugar_g22} entre {fecha_inicio_g22.strftime('%d-%m-%Y')} y {fecha_fin_g22.strftime('%d-%m-%Y')}"
+elif option_nota_g22 == 'Sin coctel':
+    temp_g22 = temp_g22[temp_g22['coctel'] == 0]
+    titulo = f"Proporción de mensajes emitidos sin coctel por {option_fuente_g22} en {option_lugar_g22} entre {fecha_inicio_g22.strftime('%d-%m-%Y')} y {fecha_fin_g22.strftime('%d-%m-%Y')}"
+else:
+    titulo = f"Proporción de mensajes emitidos por {option_fuente_g22} en {option_lugar_g22} entre {fecha_inicio_g22.strftime('%d-%m-%Y')} y {fecha_fin_g22.strftime('%d-%m-%Y')}"
 
 if option_fuente_g22 == 'Radio':
     temp_g22 = temp_g22[temp_g22['id_fuente']==1].groupby('color')["id"].count().reset_index()
@@ -1139,30 +1192,28 @@ else:
 temp_g22 = temp_g22.rename(columns={'id':'frecuencia'})
 temp_g22['porcentaje'] = temp_g22['frecuencia']/temp_g22['frecuencia'].sum()
 temp_g22['porcentaje'] = temp_g22['porcentaje'].apply(lambda x:"{:.2%}".format(x))
+temp_g22 = temp_g22.reset_index(drop=True)
 
 if not temp_g22.empty:
 
-    col1, col2 = st.columns(2)
-    with col1:
-        st.write(temp_g22, use_container_width=True)
-
-    with col2:
-        fig_22 = px.pie(temp_g22,
-                        values='frecuencia',
-                        names='color',
-                        hole=0.3,
-                        color='color',
-                        color_discrete_map=color_discrete_map,
-                        )
-        st.plotly_chart(fig_22, use_container_width=True)
-
+    fig_22 = px.pie(temp_g22,
+                    values='frecuencia',
+                    names='color',
+                    title=titulo,
+                    width=600,
+                    hole=0.3,
+                    color='color',
+                    color_discrete_map=color_discrete_map,
+                    )
+    st.plotly_chart(fig_22, use_container_width=True)
+    st.dataframe(temp_g22, hide_index=True)
 else:
     st.warning("No hay datos para mostrar")
 
 #%% 23.- Se realizan gráficas de los mensajes emitidos por tema y en estos también se subdividen si son de tipo neutral, a favor, en contra, etc.
-st.subheader("16.- Recuento de mensajes emitidos por tema en lugar y fecha específica")
+st.subheader("16.- Recuento de Mensajes Emitidos por Tema y Tipo de Nota en Lugar y Fecha Específica")
 
-col1, col2, col3, col4 = st.columns(4)
+col1, col2 = st.columns(2)
 
 with col1:
     fecha_inicio_g23 = st.date_input(
@@ -1172,17 +1223,21 @@ with col2:
     fecha_fin_g23 = st.date_input(
     "Fecha Fin g16",
     format="DD.MM.YYYY")
-with col3:
+
+col1, col2, col3 = st.columns(3)
+with col1:
     option_fuente_g23 = st.selectbox(
     "Fuente g16",
     ("Radio", "TV", "Redes","Todos"))
-
-with col4:
+with col2:
     option_lugar_g23 = st.selectbox(
     "Lugar g16",
     lugares_uniques)
-
-st.write(f"Recuento de mensajes emitidos por tema en {option_lugar_g23} entre {fecha_inicio_g23} y {fecha_fin_g23}")
+with col3:
+    option_nota_g23 = st.selectbox(
+    "Nota g16",
+    ("Con coctel", "Sin coctel", "Todos")
+    )
 
 fecha_inicio_g23 = pd.to_datetime(fecha_inicio_g23,format='%Y-%m-%d')
 fecha_fin_g23 = pd.to_datetime(fecha_fin_g23,format='%Y-%m-%d')
@@ -1190,6 +1245,15 @@ fecha_fin_g23 = pd.to_datetime(fecha_fin_g23,format='%Y-%m-%d')
 temp_g23 = temp_coctel_temas[(temp_coctel_temas['fecha_registro']>=fecha_inicio_g23) &
                                 (temp_coctel_temas['fecha_registro']<=fecha_fin_g23) &
                                 (temp_coctel_temas['lugar']==option_lugar_g23)]
+
+if option_nota_g23 == 'Con coctel':
+    temp_g23 = temp_g23[temp_g23['coctel'] == 1]
+    titulo = f"Recuento de mensajes emitidos con coctel por {option_fuente_g23} en {option_lugar_g23} entre {fecha_inicio_g23.strftime('%d-%m-%Y')} y {fecha_fin_g23.strftime('%d-%m-%Y')}"
+elif option_nota_g23 == 'Sin coctel':
+    temp_g23 = temp_g23[temp_g23['coctel'] == 0]
+    titulo = f"Recuento de mensajes emitidos sin coctel por {option_fuente_g23} en {option_lugar_g23} entre {fecha_inicio_g23.strftime('%d-%m-%Y')} y {fecha_fin_g23.strftime('%d-%m-%Y')}"
+else:
+    titulo = f"Recuento de mensajes emitidos por {option_fuente_g23} en {option_lugar_g23} entre {fecha_inicio_g23.strftime('%d-%m-%Y')} y {fecha_fin_g23.strftime('%d-%m-%Y')}"
 
 if option_fuente_g23 == 'Radio':
     temp_g23 = temp_g23[temp_g23['id_fuente']==1]
@@ -1210,12 +1274,14 @@ if not temp_g23.empty:
         df_top_10,
         x='descripcion',
         y='frecuencia',
+        title=titulo,
         color='id_posicion',
         text='frecuencia',
         barmode='stack',
         labels={'frecuencia': 'Frecuencia', 'descripcion': 'Tema', 'id_posicion': 'Posición'},
         category_orders={'descripcion': top_10_temas},
-        color_discrete_map=color_posicion_dict
+        color_discrete_map=color_posicion_dict,
+        height=500
     )
 
     st.plotly_chart(fig_23, use_container_width=True)
@@ -1225,9 +1291,9 @@ else:
 
 
 #%% 24.- Proporción de mensajes emitidos por tema en lugar y fecha específica
-st.subheader("17.- Proporción de mensajes emitidos por tema en lugar y fecha específica")
+st.subheader("17.- Proporción de Mensajes Emitidos por Fuente y Tipo de Nota en un Lugar y Fecha Específicos")
 
-col1, col2, col3, col4 = st.columns(4)
+col1, col2 = st.columns(2)
 
 with col1:
     fecha_inicio_g24 = st.date_input(
@@ -1237,17 +1303,23 @@ with col2:
     fecha_fin_g24 = st.date_input(
     "Fecha Fin g17",
     format="DD.MM.YYYY")
-with col3:
+
+col1, col2, col3 = st.columns(3)    
+with col1:
     option_fuente_g24 = st.selectbox(
     "Fuente g17",
     ("Radio", "TV", "Redes","Todos"),)
 
-with col4:
+with col2:
     option_lugar_g24 = st.selectbox(
     "Lugar g17",
     lugares_uniques)
 
-st.write(f"Proporcion de mensajes emitidos por tema en {option_lugar_g24} entre {fecha_inicio_g24} y {fecha_fin_g24}")
+with col3:
+    option_nota_g24 = st.selectbox(
+    "Nota g17",
+    ("Con coctel", "Sin coctel", "Todos")
+    )
 
 fecha_inicio_g24 = pd.to_datetime(fecha_inicio_g24,format='%Y-%m-%d')
 fecha_fin_g24 = pd.to_datetime(fecha_fin_g24,format='%Y-%m-%d')
@@ -1256,6 +1328,14 @@ temp_g24 = temp_coctel_temas[(temp_coctel_temas['fecha_registro']>=fecha_inicio_
                                 (temp_coctel_temas['fecha_registro']<=fecha_fin_g24) &
                                 (temp_coctel_temas['lugar']==option_lugar_g24)]
 
+if option_nota_g24 == 'Con coctel':
+    temp_g24 = temp_g24[temp_g24['coctel'] == 1]
+    titulo = f"Proporción de mensajes emitidos con coctel por {option_fuente_g24} en {option_lugar_g24} entre {fecha_inicio_g24.strftime('%d-%m-%Y')} y {fecha_fin_g24.strftime('%d-%m-%Y')}"
+elif option_nota_g24 == 'Sin coctel':
+    temp_g24 = temp_g24[temp_g24['coctel'] == 0]
+    titulo = f"Proporción de mensajes emitidos sin coctel por {option_fuente_g24} en {option_lugar_g24} entre {fecha_inicio_g24.strftime('%d-%m-%Y')} y {fecha_fin_g24.strftime('%d-%m-%Y')}"
+else:
+    titulo = f"Proporción de mensajes emitidos por {option_fuente_g24} en {option_lugar_g24} entre {fecha_inicio_g24.strftime('%d-%m-%Y')} y {fecha_fin_g24.strftime('%d-%m-%Y')}"
 
 if option_fuente_g24 == 'Radio':
     temp_g24 = temp_g24[temp_g24['id_fuente']==1]
@@ -1278,15 +1358,13 @@ if not temp_g24.empty:
     fig_24 = px.bar(df_top_10_24,
                     x="porcentaje",
                     y="descripcion",
+                    title=titulo,
                     orientation='h',
                     text="porcentaje", 
-                    labels={'porcentaje': 'Porcentaje', 'descripcion': 'Temas'}
+                    labels={'porcentaje': 'Porcentaje %', 'descripcion': 'Temas'}
                     )
 
-    fig_24.update_layout(yaxis={'categoryorder':'total ascending'},
-                        xaxis_title='Porcentaje (%)',
-                        yaxis_title='Temas')
-
+    fig_24.update_layout(yaxis={'categoryorder':'total ascending'})
     st.plotly_chart(fig_24, use_container_width=True)
 
 else:
@@ -1294,9 +1372,9 @@ else:
 
 #%% 25.- Se busca conocer la tendencia de las notas emitidas ya sean de coctel o no o combinadas por radio o redes
 
-st.subheader("18.- Tendencia de las notas emitidas por fuente en lugar y fecha específica")
+st.subheader("18.- Tendencia de las notas emitidas en lugar y fecha específica por fuente y tipo de nota")
 
-col1, col2, col3, col4 = st.columns(4)
+col1, col2 = st.columns(2)
 
 with col1:
     fecha_inicio_g25 = st.date_input(
@@ -1306,15 +1384,24 @@ with col2:
     fecha_fin_g25 = st.date_input(
     "Fecha Fin g18",
     format="DD.MM.YYYY")
-with col3:
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
     option_fuente_g25 = st.selectbox(
     "Fuente g18",
     ("Radio", "TV", "Redes"),)
 
-with col4:
+with col2:
     option_lugar_g25 = st.selectbox(
     "Lugar g18",
     lugares_uniques)
+
+with col3:
+    option_nota_g25 = st.selectbox(
+    "Nota g18",
+    ("Con coctel", "Sin coctel", "Todos")
+    )
 
 
 fecha_inicio_g25 = pd.to_datetime(fecha_inicio_g25,format='%Y-%m-%d')
@@ -1328,6 +1415,17 @@ temp_g25_redes = temp_coctel_fuente_fb[(temp_coctel_fuente_fb['fecha_registro']>
                                         (temp_coctel_fuente_fb['fecha_registro']<=fecha_fin_g25) &
                                         (temp_coctel_fuente_fb['lugar']==option_lugar_g25)]
 
+if option_nota_g25 == 'Con coctel':
+    temp_g25_medio = temp_g25_medio[temp_g25_medio['coctel'] == 1]
+    temp_g25_redes = temp_g25_redes[temp_g25_redes['coctel'] == 1]
+    titulo = f"Tendencia de las notas emitidas con coctel por {option_fuente_g25} en {option_lugar_g25} entre {fecha_inicio_g25.strftime('%d-%m-%Y')} y {fecha_fin_g25.strftime('%d-%m-%Y')}"
+elif option_nota_g25 == 'Sin coctel':
+    temp_g25_medio = temp_g25_medio[temp_g25_medio['coctel'] == 0]
+    temp_g25_redes = temp_g25_redes[temp_g25_redes['coctel'] == 0]
+    titulo = f"Tendencia de las notas emitidas sin coctel por {option_fuente_g25} en {option_lugar_g25} entre {fecha_inicio_g25.strftime('%d-%m-%Y')} y {fecha_fin_g25.strftime('%d-%m-%Y')}"
+else:
+    titulo = f"Tendencia de las notas emitidas por {option_fuente_g25} en {option_lugar_g25} entre {fecha_inicio_g25.strftime('%d-%m-%Y')} y {fecha_fin_g25.strftime('%d-%m-%Y')}"
+
 if option_fuente_g25 == 'Radio':
     temp_g25_medio = temp_g25_medio[temp_g25_medio['id_fuente']==1]
 elif option_fuente_g25 == 'TV':
@@ -1335,38 +1433,40 @@ elif option_fuente_g25 == 'TV':
 elif option_fuente_g25 == 'Redes':
     temp_g25_redes = temp_g25_redes[temp_g25_redes['id_fuente']==3]
 
+
 if option_fuente_g25 == "Redes" and not temp_g25_redes.empty:
     df_grouped_25_redes = temp_g25_redes.groupby(['nombre_facebook_page', 'id_posicion']).size().reset_index(name='frecuencia')
+    df_grouped_25_redes = df_grouped_25_redes.sort_values(by='frecuencia', ascending=False)
     df_grouped_25_redes['id_posicion'] = df_grouped_25_redes['id_posicion'].map(id_posicion_dict)
     
     fig_25_redes = px.bar(df_grouped_25_redes,
                         x='nombre_facebook_page',
                         y='frecuencia',
+                        title = titulo, 
                         color='id_posicion',
                         barmode='stack',
                         labels={'frecuencia': 'Frecuencia', 'nombre_facebook_page': 'Pagina Facebook', 'id_posicion': 'Posición'},
                         color_discrete_map=color_posicion_dict,
                         text = 'frecuencia'
                         )
-    st.write(f"Tendencia de las notas emitidas por {option_fuente_g25} en {option_lugar_g25} entre {fecha_inicio_g25} y {fecha_fin_g25}")
-
+    fig_25_redes.update_layout(height=600)
     st.plotly_chart(fig_25_redes, use_container_width=True)
 
 elif option_fuente_g25 != "Redes" and not temp_g25_medio.empty:
     df_grouped_25_medio = temp_g25_medio.groupby(['nombre_canal', 'id_posicion']).size().reset_index(name='frecuencia')
+    df_grouped_25_medio = df_grouped_25_medio.sort_values(by='frecuencia', ascending=False)
     df_grouped_25_medio['id_posicion'] = df_grouped_25_medio['id_posicion'].map(id_posicion_dict)
     
     fig_25_medio = px.bar(df_grouped_25_medio,
                         x='nombre_canal',
                         y='frecuencia',
                         color='id_posicion',
+                        title = titulo,
                         barmode='stack',
                         color_discrete_map=color_posicion_dict,
                         labels={'frecuencia': 'Frecuencia', 'nombre_canal': 'Canal', 'id_posicion': 'Posición'},
-                        text = 'frecuencia'
+                        text = 'frecuencia',
                         )
-    st.write(f"Tendencia de las notas emitidas por {option_fuente_g25} en {option_lugar_g25} entre {fecha_inicio_g25} y {fecha_fin_g25}")
-
     st.plotly_chart(fig_25_medio, use_container_width=True)
 
 else:
@@ -1375,9 +1475,9 @@ else:
 
 #%% 26.- Se busca conocer las noticias emitidas en un cierto rango de tiempo cuantos son a favor, en contra, neutral, etc
 
-st.subheader("19.- Noticias emitidas en un rango de tiempo segun posicion")
+st.subheader("19.- Notas emitidas en un rango de tiempo segun posicion y coctel")
 
-col1, col2 = st.columns(2)
+col1, col2, col3 = st.columns(3)
 
 with col1:
     fecha_inicio_g26 = st.date_input(
@@ -1389,13 +1489,26 @@ with col2:
     "Fecha Fin g19",
     format="DD.MM.YYYY")
 
-st.write(f"Noticias emitidas entre {fecha_inicio_g26} y {fecha_fin_g26} según posición")
+with col3:
+    option_nota_g26 = st.selectbox(
+        "Nota g19",
+        ("Con coctel", "Sin coctel", "Todos")
+        )
 
 fecha_inicio_g26 = pd.to_datetime(fecha_inicio_g26,format='%Y-%m-%d')
 fecha_fin_g26 = pd.to_datetime(fecha_fin_g26,format='%Y-%m-%d')
 
 temp_g26 = temp_coctel_temas[(temp_coctel_temas['fecha_registro']>=fecha_inicio_g26) &
                                 (temp_coctel_temas['fecha_registro']<=fecha_fin_g26)]
+
+if option_nota_g26 == 'Con coctel':
+    temp_g26 = temp_g26[temp_g26['coctel'] == 1]
+    titulo = f"Notas emitidas con coctel entre {fecha_inicio_g26.strftime('%d-%m-%Y')} y {fecha_fin_g26.strftime('%d-%m-%Y')} según posición"
+elif option_nota_g26 == 'Sin coctel':
+    temp_g26 = temp_g26[temp_g26['coctel'] == 0]
+    titulo = f"Notas emitidas sin coctel entre {fecha_inicio_g26.strftime('%d-%m-%Y')} y {fecha_fin_g26.strftime('%d-%m-%Y')} según posición"
+else:
+    titulo = f"Notas emitidas entre {fecha_inicio_g26.strftime('%d-%m-%Y')} y {fecha_fin_g26.strftime('%d-%m-%Y')} según posición"
 
 if not temp_g26.empty:
 
@@ -1406,6 +1519,7 @@ if not temp_g26.empty:
     fig_26 = px.bar(df_grouped_26,
                     x='id_posicion',
                     y='frecuencia',
+                    title = titulo,
                     labels={'frecuencia': 'Frecuencia', 'id_posicion': 'Posición'},
                     color='id_posicion',
                     color_discrete_map=color_posicion_dict,
@@ -1419,9 +1533,10 @@ else:
 
 #%% 27.- grafico de barras sobre actores y posiciones
 
+
 st.subheader("20.- Recuento de posiciones emitidas por actor en lugar y fecha específica")
 
-col1, col2, col3, col4 = st.columns(4)
+col1, col2 = st.columns(2)
 
 with col1:
     fecha_inicio_g27 = st.date_input(
@@ -1431,17 +1546,24 @@ with col2:
     fecha_fin_g27 = st.date_input(
     "Fecha Fin g20",
     format="DD.MM.YYYY")
-with col3:
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
     option_fuente_g27 = st.selectbox(
     "Fuente g20",
     ("Radio", "TV", "Redes","Todos"),)
 
-with col4:
+with col2:
     option_lugar_g27 = st.selectbox(
-    "Lugar g27",
+    "Lugar g20",
     lugares_uniques)
 
-st.write(f"Recuento de posiciones emitidas por actor en {option_lugar_g27} entre {fecha_inicio_g27} y {fecha_fin_g27}")
+with col3:
+    option_nota_g27 = st.selectbox(
+        "Nota g20",
+        ("Con coctel", "Sin coctel", "Todos"))
+
 
 fecha_inicio_g27 = pd.to_datetime(fecha_inicio_g27,format='%Y-%m-%d')
 fecha_fin_g27 = pd.to_datetime(fecha_fin_g27,format='%Y-%m-%d')
@@ -1457,6 +1579,17 @@ elif option_fuente_g27 == 'TV':
 elif option_fuente_g27 == 'Redes':
     temp_g27 = temp_g27[temp_g27['id_fuente']==3]
 
+if option_nota_g27 == 'Con coctel':
+    temp_g27 = temp_g27[temp_g27['coctel'] == 1]
+    titulo = f"Recuento de posiciones emitidas por actor en {option_lugar_g27} entre {fecha_inicio_g27.strftime('%d-%m-%Y')} y {fecha_fin_g27.strftime('%d-%m-%Y')}. Notas con coctel"
+elif option_nota_g27 == 'Sin coctel':
+    temp_g27 = temp_g27[temp_g27['coctel'] == 0]
+    titulo = f"Recuento de posiciones emitidas por actor en {option_lugar_g27} entre {fecha_inicio_g27.strftime('%d-%m-%Y')} y {fecha_fin_g27.strftime('%d-%m-%Y')}. Notas sin coctel"
+
+else:
+    titulo = f"Recuento de posiciones emitidas por actor en {option_lugar_g27} entre {fecha_inicio_g27.strftime('%d-%m-%Y')} y {fecha_fin_g27.strftime('%d-%m-%Y')}"
+
+
 if not temp_g27.empty:
     temp_g27["posicion"] = temp_g27["id_posicion"].map(id_posicion_dict)
     temp_g27 = temp_g27[temp_g27["nombre"] != "periodista"]
@@ -1469,6 +1602,7 @@ if not temp_g27.empty:
     fig_27 = px.bar(df_top_10_27,
                     x='nombre',
                     y='frecuencia',
+                    title = titulo,
                     color='posicion',
                     barmode='stack',
                     color_discrete_map={'a favor': 'blue', 'potencialmente a favor': 'lightblue', 'neutral': 'gray', 'potencialmente en contra': 'orange', 'en contra': 'red'},
@@ -1481,3 +1615,4 @@ if not temp_g27.empty:
 
 else:
     st.warning("No hay datos para mostrar")
+    
