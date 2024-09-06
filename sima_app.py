@@ -16,8 +16,6 @@ temp_coctel_fuente_fb = pd.read_parquet('temp_coctel_fuente_fb.parquet')
 temp_coctel_fuente_actores = pd.read_parquet('temp_coctel_fuente_actores.parquet')
 temp_coctel_temas = pd.read_parquet('temp_coctel_temas.parquet')
 
-
-
 lugares_uniques = temp_coctel_fuente['lugar'].unique().tolist()
 
 temp_coctel_fuente['fecha_registro'] = pd.to_datetime(temp_coctel_fuente['fecha_registro'])
@@ -25,6 +23,7 @@ temp_coctel_fuente_programas['fecha_registro'] = pd.to_datetime(temp_coctel_fuen
 temp_coctel_fuente_fb['fecha_registro'] = pd.to_datetime(temp_coctel_fuente_fb['fecha_registro'])
 temp_coctel_fuente_actores['fecha_registro'] = pd.to_datetime(temp_coctel_fuente_actores['fecha_registro'])
 temp_coctel_temas['fecha_registro'] = pd.to_datetime(temp_coctel_temas['fecha_registro'])
+
 #%% diccionarios
 
 id_posicion_dict = {1: 'a favor',
@@ -32,10 +31,6 @@ id_posicion_dict = {1: 'a favor',
                     3: 'neutral',
                     4: 'potencialmente en contra',
                     5: 'en contra'}
-id_fuente_dict = {1: 'radio',
-                  2: 'tv',
-                  3: 'redes'
-                  }
 coctel_dict = {0: 'Sin coctel',
                1: 'Con coctel'
                }
@@ -420,7 +415,8 @@ if not temp_g3.empty:
                 x="semana",
                 y="coctel_mean",
                 color='lugar',
-                title='Porcentaje de cocteles por semana %'
+                title='Porcentaje de cocteles por semana %',
+                labels = {'semana':'Semana','coctel_mean':'Porcentaje de cocteles %'}
                 )
     fig.update_xaxes(type='category')
     st.plotly_chart(fig)
